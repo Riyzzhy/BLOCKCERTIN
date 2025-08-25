@@ -2,6 +2,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthProvider } from './contexts/AuthContext';
+import { Web3Provider } from './contexts/Web3Context';
+import Chatbot from './components/Chatbot';
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
@@ -12,21 +15,17 @@ import NotFound from "./pages/NotFound";
 import DocumentView from './pages/DocumentView';
 import { DocumentProvider } from './lib/utils.tsx';
 import SignIn from './pages/SignIn';
-import { TwentyFirstToolbar } from '@21st-extension/toolbar-react';
-import { ReactPlugin } from '@21st-extension/react';
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <TwentyFirstToolbar
-        config={{
-          plugins: [ReactPlugin]
-        }}
-      />
+    <AuthProvider>
+    <Web3Provider>
+    <Toaster />
+    <Sonner />
+    <Chatbot />
       <DocumentProvider>
         <BrowserRouter>
           <Routes>
@@ -56,6 +55,8 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </DocumentProvider>
+    </Web3Provider>
+    </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
