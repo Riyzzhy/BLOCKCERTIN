@@ -16,8 +16,8 @@ const DocumentView = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-2xl font-bold mb-2">Document Not Found</h2>
-          <p className="text-muted-foreground">This document does not exist or has been deleted.</p>
+          <h2 className="text-2xl font-bold mb-2">Certificate Not Found</h2>
+          <p className="text-muted-foreground">This certificate does not exist or has been deleted.</p>
         </div>
       </div>
     );
@@ -55,104 +55,35 @@ const DocumentView = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              Document Details
+              Certificate Details
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Document Information */}
+            {/* Certificate Information */}
             <div>
-              <h3 className="text-lg font-semibold mb-3">
-                {doc.metadata?.documentType === 'certificate' ? 'Certificate Information' :
-                 doc.metadata?.documentType === 'internship' ? 'Internship Information' : 'Job Information'}
-              </h3>
+              <h3 className="text-lg font-semibold mb-3">Certificate Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <strong>Full Name:</strong> {doc.metadata?.fullName || 'Not specified'}
                 </div>
-                
-                {doc.metadata?.documentType === 'certificate' && (
-                  <>
-                    <div>
-                      <strong>Certificate Name:</strong> {doc.metadata?.certificateName || doc.name}
-                    </div>
-                    <div>
-                      <strong>Institution:</strong> {doc.metadata?.institution || 'Not specified'}
-                    </div>
-                    <div>
-                      <strong>Start Date:</strong> {doc.metadata?.startDate || 'Not specified'}
-                    </div>
-                    <div>
-                      <strong>Issue Date:</strong> {doc.metadata?.issueDate || 'Not specified'}
-                    </div>
-                    <div>
-                      <strong>Grades:</strong> {doc.metadata?.grades || 'Not specified'}
-                    </div>
-                    <div className="md:col-span-2">
-                      <strong>Personality:</strong> {doc.metadata?.personality || 'Not specified'}
-                    </div>
-                  </>
-                )}
-                {doc.metadata?.documentType === 'internship' && (
-                  <>
-                    <div>
-                      <strong>Company Name:</strong> {doc.metadata?.companyName || 'Not specified'}
-                    </div>
-                    <div>
-                      <strong>Position:</strong> {doc.metadata?.position || 'Not specified'}
-                    </div>
-                    <div>
-                      <strong>Department:</strong> {doc.metadata?.department || 'Not specified'}
-                    </div>
-                    <div>
-                      <strong>Supervisor:</strong> {doc.metadata?.supervisor || 'Not specified'}
-                    </div>
-                    <div>
-                      <strong>Start Date:</strong> {doc.metadata?.startDate || 'Not specified'}
-                    </div>
-                    <div>
-                      <strong>End Date:</strong> {doc.metadata?.endDate || 'Not specified'}
-                    </div>
-                    <div className="md:col-span-2">
-                      <strong>Skills:</strong> {doc.metadata?.skills || 'Not specified'}
-                    </div>
-                    {doc.metadata?.description && (
-                      <div className="md:col-span-2">
-                        <strong>Description:</strong> {doc.metadata.description}
-                      </div>
-                    )}
-                  </>
-                )}
-                {doc.metadata?.documentType === 'job' && (
-                  <>
-                    <div>
-                      <strong>Company Name:</strong> {doc.metadata?.companyName || 'Not specified'}
-                    </div>
-                    <div>
-                      <strong>Job Title:</strong> {doc.metadata?.jobTitle || 'Not specified'}
-                    </div>
-                    <div>
-                      <strong>Department:</strong> {doc.metadata?.department || 'Not specified'}
-                    </div>
-                    <div>
-                      <strong>Employment Type:</strong> {doc.metadata?.employmentType || 'Not specified'}
-                    </div>
-                    <div>
-                      <strong>Start Date:</strong> {doc.metadata?.startDate || 'Not specified'}
-                    </div>
-                    <div>
-                      <strong>End Date:</strong> {doc.metadata?.endDate || 'Current position'}
-                    </div>
-                    <div>
-                      <strong>Salary:</strong> {doc.metadata?.salary || 'Not specified'}
-                    </div>
-                    <div className="md:col-span-2">
-                      <strong>Responsibilities:</strong> {doc.metadata?.responsibilities || 'Not specified'}
-                    </div>
-                    <div className="md:col-span-2">
-                      <strong>Achievements:</strong> {doc.metadata?.achievements || 'Not specified'}
-                    </div>
-                  </>
-                )}
+                <div>
+                  <strong>Certificate Name:</strong> {doc.metadata?.certificateName || doc.name}
+                </div>
+                <div>
+                  <strong>Institution:</strong> {doc.metadata?.institution || 'Not specified'}
+                </div>
+                <div>
+                  <strong>Start Date:</strong> {doc.metadata?.startDate || 'Not specified'}
+                </div>
+                <div>
+                  <strong>Issue Date:</strong> {doc.metadata?.issueDate || 'Not specified'}
+                </div>
+                <div>
+                  <strong>Grades:</strong> {doc.metadata?.grades || 'Not specified'}
+                </div>
+                <div className="md:col-span-2">
+                  <strong>Personality:</strong> {doc.metadata?.personality || 'Not specified'}
+                </div>
                 {doc.metadata?.additionalDetails && (
                   <div className="md:col-span-2">
                     <strong>Additional Details:</strong> {doc.metadata.additionalDetails}

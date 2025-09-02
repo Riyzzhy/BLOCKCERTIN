@@ -16,15 +16,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { SignInDropdown } from '@/components/SignInDropdown';
-import ToggleSwitch from '@/components/ui/ToggleSwitch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const Upload = () => {
   const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
-  const [documentType, setDocumentType] = useState<'certificate' | 'internship' | 'job'>('certificate');
   const [formData, setFormData] = useState({
     fullName: '',
     certificateName: '', // Changed from documentName
@@ -36,35 +33,6 @@ const Upload = () => {
     additionalDetails: ''
   });
 
-  // Internship form data
-  const [internshipData, setInternshipData] = useState({
-    fullName: '',
-    companyName: '',
-    position: '',
-    department: '',
-    startDate: '',
-    endDate: '',
-    supervisor: '',
-    skills: '',
-    description: '',
-    additionalDetails: ''
-  });
-
-  // Job form data
-  const [jobData, setJobData] = useState({
-    fullName: '',
-    companyName: '',
-    jobTitle: '',
-    department: '',
-    startDate: '',
-    endDate: '',
-    employmentType: '',
-    salary: '',
-    responsibilities: '',
-    achievements: '',
-    additionalDetails: ''
-  });
-
   const { addDocument } = useDocuments();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -72,36 +40,8 @@ const Upload = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleInternshipChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setInternshipData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleJobChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setJobData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleJobSelectChange = (name: string, value: string) => {
-    setJobData(prev => ({ ...prev, [name]: value }));
-  };
-
   const handleDateSelect = (field: 'startDate' | 'issueDate', date: Date) => {
     setFormData(prev => ({
-      ...prev,
-      [field]: format(date, 'yyyy-MM-dd')
-    }));
-  };
-
-  const handleInternshipDateSelect = (field: 'startDate' | 'endDate', date: Date) => {
-    setInternshipData(prev => ({
-      ...prev,
-      [field]: format(date, 'yyyy-MM-dd')
-    }));
-  };
-
-  const handleJobDateSelect = (field: 'startDate' | 'endDate', date: Date) => {
-    setJobData(prev => ({
       ...prev,
       [field]: format(date, 'yyyy-MM-dd')
     }));
@@ -139,21 +79,9 @@ const Upload = () => {
   };
 
   const simulateAIAnalysis = async (file: File) => {
-    let requiredFields: string[] = [];
-    let currentData: any = {};
-    
-    if (documentType === 'certificate') {
-      requiredFields = ['fullName', 'certificateName', 'institution', 'startDate', 'issueDate', 'personality'];
-      currentData = formData;
-    } else if (documentType === 'internship') {
-      requiredFields = ['fullName', 'companyName', 'position', 'department', 'startDate', 'endDate', 'supervisor'];
-      currentData = internshipData;
-    } else if (documentType === 'job') {
-      requiredFields = ['fullName', 'companyName', 'jobTitle', 'department', 'startDate', 'employmentType'];
-      currentData = jobData;
-    }
-    
-    const missingFields = requiredFields.filter(field => !currentData[field]);
+    // Validate required fields (grades now optional)
+    const requiredFields = ['fullName', 'certificateName', 'institution', 'startDate', 'issueDate', 'personality'];
+    const missingFields = requiredFields.filter(field => !formData[field]);
     
     if (missingFields.length > 0) {
       alert(`Please fill in all required fields: ${missingFields.join(', ')}`);
@@ -184,10 +112,10 @@ const Upload = () => {
       const structureScore = await analyzeCertificateStructure(file);
 
       // 3. Content Verification (25%)
-      const contentScore = calculateContentScore(currentData, documentType);
+      const contentScore = calculateContentScore();
 
       // 4. Metadata Validation (25%)
-      const metadataScore = validateMetadata(currentData, documentType);
+      const metadataScore = validateMetadata();
 
       // Calculate final accuracy score (0-100%)
       const accuracy = formatScore + structureScore + contentScore + metadataScore;
@@ -270,66 +198,45 @@ const Upload = () => {
     return score;
   };
 
-  const calculateContentScore = (data: any, type: string): number => {
+  const calculateContentScore = (): number => {
     let score = 0;
 
-    if (type === 'certificate') {
-      if (data.fullName.length > 0) score += 5;
-      if (data.certificateName.length > 0) score += 5;
-      if (data.institution.length > 0) score += 5;
-      const startDate = new Date(data.startDate);
-      const issueDate = new Date(data.issueDate);
-      if (issueDate > startDate) score += 5;
-      if (data.additionalDetails) score += 5;
-    } else if (type === 'internship') {
-      if (data.fullName.length > 0) score += 5;
-      if (data.companyName.length > 0) score += 5;
-      if (data.position.length > 0) score += 5;
-      const startDate = new Date(data.startDate);
-      const endDate = new Date(data.endDate);
-      if (endDate > startDate) score += 5;
-      if (data.supervisor.length > 0) score += 5;
-    } else if (type === 'job') {
-      if (data.fullName.length > 0) score += 5;
-      if (data.companyName.length > 0) score += 5;
-      if (data.jobTitle.length > 0) score += 5;
-      const startDate = new Date(data.startDate);
-      const endDate = data.endDate ? new Date(data.endDate) : new Date();
-      if (endDate > startDate) score += 5;
-      if (data.employmentType.length > 0) score += 5;
-    }
+    // Check name consistency
+    if (formData.fullName.length > 0) score += 5;
+    
+    // Check certificate name validity
+    if (formData.certificateName.length > 0) score += 5;
+    
+    // Check institution name
+    if (formData.institution.length > 0) score += 5;
+    
+    // Check dates logic
+    const startDate = new Date(formData.startDate);
+    const issueDate = new Date(formData.issueDate);
+    if (issueDate > startDate) score += 5;
+    
+    // Check additional details
+    if (formData.additionalDetails) score += 5;
 
     return score;
   };
 
-  const validateMetadata = (data: any, type: string): number => {
+  const validateMetadata = (): number => {
     let score = 0;
 
-    if (type === 'certificate') {
-      const startDate = new Date(data.startDate);
-      const issueDate = new Date(data.issueDate);
-      const today = new Date();
-      if (startDate < today && issueDate <= today) score += 10;
-      if (issueDate > startDate) score += 5;
-      if (/^[A-Za-z\s]{2,}$/.test(data.fullName)) score += 5;
-      if (data.institution.length >= 2) score += 5;
-    } else if (type === 'internship') {
-      const startDate = new Date(data.startDate);
-      const endDate = new Date(data.endDate);
-      const today = new Date();
-      if (startDate < today && endDate <= today) score += 10;
-      if (endDate > startDate) score += 5;
-      if (/^[A-Za-z\s]{2,}$/.test(data.fullName)) score += 5;
-      if (data.companyName.length >= 2) score += 5;
-    } else if (type === 'job') {
-      const startDate = new Date(data.startDate);
-      const endDate = data.endDate ? new Date(data.endDate) : new Date();
-      const today = new Date();
-      if (startDate < today) score += 10;
-      if (endDate > startDate) score += 5;
-      if (/^[A-Za-z\s]{2,}$/.test(data.fullName)) score += 5;
-      if (data.companyName.length >= 2) score += 5;
-    }
+    // Validate dates
+    const startDate = new Date(formData.startDate);
+    const issueDate = new Date(formData.issueDate);
+    const today = new Date();
+
+    if (startDate < today && issueDate <= today) score += 10;
+    if (issueDate > startDate) score += 5;
+
+    // Validate name format
+    if (/^[A-Za-z\s]{2,}$/.test(formData.fullName)) score += 5;
+
+    // Validate institution
+    if (formData.institution.length >= 2) score += 5;
 
     return score;
   };
@@ -366,20 +273,6 @@ const Upload = () => {
   const handleUpload = () => {
     if (!selectedFile || !analysisResult || !analysisResult.isAuthentic) return;
     
-    let currentData: any = {};
-    let documentName = '';
-    
-    if (documentType === 'certificate') {
-      currentData = formData;
-      documentName = formData.certificateName;
-    } else if (documentType === 'internship') {
-      currentData = internshipData;
-      documentName = `${internshipData.position} at ${internshipData.companyName}`;
-    } else if (documentType === 'job') {
-      currentData = jobData;
-      documentName = `${jobData.jobTitle} at ${jobData.companyName}`;
-    }
-    
     const status: 'pending_verification' | 'verified' | 'failed' = 'pending_verification';
     
     // Create blob from the selected file for original file downloads
@@ -399,15 +292,13 @@ const Upload = () => {
       file: selectedFile,
       blob: fileBlob, // Store blob for original file downloads with stamp
       metadata: {
-        ...currentData,
-        certificateName: documentName,
-        additionalDetails: currentData.additionalDetails || '',
+        ...formData,
+        additionalDetails: formData.additionalDetails || '',
         verified: false,
         // Add BlockCert certification metadata
         certificationStamp: 'By BlockCert Certified',
         certificationDate: new Date().toISOString(),
-        certificationSystem: 'BlockCert Blockchain Verification',
-        documentType: documentType
+        certificationSystem: 'BlockCert Blockchain Verification'
       }
     };
 
@@ -455,518 +346,158 @@ const Upload = () => {
             className="text-center mb-12"
           >
             <h1 className="text-4xl font-bold text-foreground mb-4">
-              Upload Document for Verification
+              Upload Certificate for Verification
             </h1>
             <p className="text-muted-foreground text-lg">
-              Upload your certificates, internship documents, or job records for AI analysis and blockchain verification
+              Upload your academic certificates for AI analysis and blockchain verification
             </p>
           </motion.div>
 
           <SignedIn>
-            {/* Document Type Toggle */}
-            <div className="flex justify-center mb-8">
-              <Card className="glass-effect p-4">
-                <div className="flex items-center gap-6">
-                  <span className="text-sm font-medium">Document Type:</span>
-                  <div className="flex items-center gap-4">
-                    <button
-                      onClick={() => setDocumentType('certificate')}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                        documentType === 'certificate'
-                          ? 'bg-primary text-primary-foreground shadow-md'
-                          : 'bg-muted text-muted-foreground hover:bg-accent'
-                      }`}
-                    >
-                      Certificate
-                    </button>
-                    <button
-                      onClick={() => setDocumentType('internship')}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                        documentType === 'internship'
-                          ? 'bg-primary text-primary-foreground shadow-md'
-                          : 'bg-muted text-muted-foreground hover:bg-accent'
-                      }`}
-                    >
-                      Internship
-                    </button>
-                    <button
-                      onClick={() => setDocumentType('job')}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                        documentType === 'job'
-                          ? 'bg-primary text-primary-foreground shadow-md'
-                          : 'bg-muted text-muted-foreground hover:bg-accent'
-                      }`}
-                    >
-                      Job
-                    </button>
-                  </div>
-                </div>
-              </Card>
-            </div>
-
             <div className="grid md:grid-cols-2 gap-8">
-              {/* Dynamic Form Based on Document Type */}
+              {/* Certificate Details Form */}
               <Card className="glass-effect">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <FileText className="h-5 w-5" />
-                    {documentType === 'certificate' ? 'Certificate Details' : 
-                     documentType === 'internship' ? 'Internship Details' : 'Job Details'}
+                    Certificate Details
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {documentType === 'certificate' && (
-                    <div className="grid grid-cols-1 gap-4">
-                      <div>
-                        <label className="text-sm font-medium mb-1 block">Full Name *</label>
-                        <Input
-                          name="fullName"
-                          value={formData.fullName}
-                          onChange={handleInputChange}
-                          placeholder="Enter your full name"
-                          required
-                          className="bg-card border-input"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium mb-1 block">Certificate Name *</label>
-                        <Input
-                          name="certificateName"
-                          value={formData.certificateName}
-                          onChange={handleInputChange}
-                          placeholder="e.g., Bachelor's Degree"
-                          required
-                          className="bg-card border-input"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium mb-1 block">Institution Name *</label>
-                        <Input
-                          name="institution"
-                          value={formData.institution}
-                          onChange={handleInputChange}
-                          placeholder="Enter institution name"
-                          required
-                          className="bg-card border-input"
-                        />
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-sm font-medium mb-1 block">Start Date *</label>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="outline"
-                                className={`w-full justify-start text-left font-normal bg-card border-input ${
-                                  !formData.startDate && "text-muted-foreground"
-                                }`}
-                              >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {formData.startDate ? format(new Date(formData.startDate), 'PPP') : <span>Pick a date</span>}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={formData.startDate ? new Date(formData.startDate) : undefined}
-                                onSelect={(date) => date && handleDateSelect('startDate', date)}
-                                initialFocus
-                                className="rounded-lg border shadow-lg"
-                              />
-                            </PopoverContent>
-                          </Popover>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium mb-1 block">Issue Date *</label>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="outline"
-                                className={`w-full justify-start text-left font-normal bg-card border-input ${
-                                  !formData.issueDate && "text-muted-foreground"
-                                }`}
-                              >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {formData.issueDate ? format(new Date(formData.issueDate), 'PPP') : <span>Pick a date</span>}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={formData.issueDate ? new Date(formData.issueDate) : undefined}
-                                onSelect={(date) => date && handleDateSelect('issueDate', date)}
-                                initialFocus
-                                className="rounded-lg border shadow-lg"
-                              />
-                            </PopoverContent>
-                          </Popover>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-sm font-medium mb-1 block">Grades (optional)</label>
-                          <Input
-                            name="grades"
-                            value={formData.grades}
-                            onChange={handleInputChange}
-                            placeholder="Enter grades if available"
-                            className="bg-card border-input"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium mb-1 block">Personality *</label>
-                          <Input
-                            name="personality"
-                            value={formData.personality}
-                            onChange={handleInputChange}
-                            placeholder="Enter personality traits"
-                            required
-                            className="bg-card border-input"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-sm font-medium mb-1 block">Additional Details (optional)</label>
-                        <Textarea
-                          name="additionalDetails"
-                          value={formData.additionalDetails}
-                          onChange={handleInputChange}
-                          placeholder="Add any additional details about the certificate"
-                          rows={4}
-                          className="bg-card border-input"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {documentType === 'internship' && (
-                    <div className="grid grid-cols-1 gap-4">
-                      <div>
-                        <label className="text-sm font-medium mb-1 block">Full Name *</label>
-                        <Input
-                          name="fullName"
-                          value={internshipData.fullName}
-                          onChange={handleInternshipChange}
-                          placeholder="Enter your full name"
-                          required
-                          className="bg-card border-input"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium mb-1 block">Company Name *</label>
-                        <Input
-                          name="companyName"
-                          value={internshipData.companyName}
-                          onChange={handleInternshipChange}
-                          placeholder="Enter company name"
-                          required
-                          className="bg-card border-input"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium mb-1 block">Position *</label>
-                        <Input
-                          name="position"
-                          value={internshipData.position}
-                          onChange={handleInternshipChange}
-                          placeholder="e.g., Software Development Intern"
-                          required
-                          className="bg-card border-input"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium mb-1 block">Department *</label>
-                        <Input
-                          name="department"
-                          value={internshipData.department}
-                          onChange={handleInternshipChange}
-                          placeholder="e.g., Engineering, Marketing"
-                          required
-                          className="bg-card border-input"
-                        />
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-sm font-medium mb-1 block">Start Date *</label>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="outline"
-                                className={`w-full justify-start text-left font-normal bg-card border-input ${
-                                  !internshipData.startDate && "text-muted-foreground"
-                                }`}
-                              >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {internshipData.startDate ? format(new Date(internshipData.startDate), 'PPP') : <span>Pick a date</span>}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={internshipData.startDate ? new Date(internshipData.startDate) : undefined}
-                                onSelect={(date) => date && handleInternshipDateSelect('startDate', date)}
-                                initialFocus
-                                className="rounded-lg border shadow-lg"
-                              />
-                            </PopoverContent>
-                          </Popover>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium mb-1 block">End Date *</label>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="outline"
-                                className={`w-full justify-start text-left font-normal bg-card border-input ${
-                                  !internshipData.endDate && "text-muted-foreground"
-                                }`}
-                              >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {internshipData.endDate ? format(new Date(internshipData.endDate), 'PPP') : <span>Pick a date</span>}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={internshipData.endDate ? new Date(internshipData.endDate) : undefined}
-                                onSelect={(date) => date && handleInternshipDateSelect('endDate', date)}
-                                initialFocus
-                                className="rounded-lg border shadow-lg"
-                              />
-                            </PopoverContent>
-                          </Popover>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-sm font-medium mb-1 block">Supervisor *</label>
-                        <Input
-                          name="supervisor"
-                          value={internshipData.supervisor}
-                          onChange={handleInternshipChange}
-                          placeholder="Enter supervisor name"
-                          required
-                          className="bg-card border-input"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-sm font-medium mb-1 block">Skills Gained (optional)</label>
-                        <Input
-                          name="skills"
-                          value={internshipData.skills}
-                          onChange={handleInternshipChange}
-                          placeholder="e.g., React, Python, Project Management"
-                          className="bg-card border-input"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-sm font-medium mb-1 block">Description (optional)</label>
-                        <Textarea
-                          name="description"
-                          value={internshipData.description}
-                          onChange={handleInternshipChange}
-                          placeholder="Describe your internship experience and responsibilities"
-                          rows={3}
-                          className="bg-card border-input"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-sm font-medium mb-1 block">Additional Details (optional)</label>
-                        <Textarea
-                          name="additionalDetails"
-                          value={internshipData.additionalDetails}
-                          onChange={handleInternshipChange}
-                          placeholder="Add any additional details about the internship"
-                          rows={2}
-                          className="bg-card border-input"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {documentType === 'job' && (
+                  <div className="grid grid-cols-1 gap-4">
                     <div>
-                      <div className="grid grid-cols-1 gap-4">
-                        <div>
-                          <label className="text-sm font-medium mb-1 block">Full Name *</label>
-                          <Input
-                            name="fullName"
-                            value={jobData.fullName}
-                            onChange={handleJobChange}
-                            placeholder="Enter your full name"
-                            required
-                            className="bg-card border-input"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium mb-1 block">Company Name *</label>
-                          <Input
-                            name="companyName"
-                            value={jobData.companyName}
-                            onChange={handleJobChange}
-                            placeholder="Enter company name"
-                            required
-                            className="bg-card border-input"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium mb-1 block">Job Title *</label>
-                          <Input
-                            name="jobTitle"
-                            value={jobData.jobTitle}
-                            onChange={handleJobChange}
-                            placeholder="e.g., Software Engineer"
-                            required
-                            className="bg-card border-input"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium mb-1 block">Department *</label>
-                          <Input
-                            name="department"
-                            value={jobData.department}
-                            onChange={handleJobChange}
-                            placeholder="e.g., Engineering, Sales"
-                            required
-                            className="bg-card border-input"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-sm font-medium mb-1 block">Start Date *</label>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="outline"
-                                className={`w-full justify-start text-left font-normal bg-card border-input ${
-                                  !jobData.startDate && "text-muted-foreground"
-                                }`}
-                              >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {jobData.startDate ? format(new Date(jobData.startDate), 'PPP') : <span>Pick a date</span>}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={jobData.startDate ? new Date(jobData.startDate) : undefined}
-                                onSelect={(date) => date && handleJobDateSelect('startDate', date)}
-                                initialFocus
-                                className="rounded-lg border shadow-lg"
-                              />
-                            </PopoverContent>
-                          </Popover>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium mb-1 block">End Date (optional)</label>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="outline"
-                                className={`w-full justify-start text-left font-normal bg-card border-input ${
-                                  !jobData.endDate && "text-muted-foreground"
-                                }`}
-                              >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {jobData.endDate ? format(new Date(jobData.endDate), 'PPP') : <span>Current position</span>}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={jobData.endDate ? new Date(jobData.endDate) : undefined}
-                                onSelect={(date) => date && handleJobDateSelect('endDate', date)}
-                                initialFocus
-                                className="rounded-lg border shadow-lg"
-                              />
-                            </PopoverContent>
-                          </Popover>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-sm font-medium mb-1 block">Employment Type *</label>
-                          <Select onValueChange={(value) => handleJobSelectChange('employmentType', value)}>
-                            <SelectTrigger className="bg-card border-input">
-                              <SelectValue placeholder="Select employment type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="full-time">Full-time</SelectItem>
-                              <SelectItem value="part-time">Part-time</SelectItem>
-                              <SelectItem value="contract">Contract</SelectItem>
-                              <SelectItem value="freelance">Freelance</SelectItem>
-                              <SelectItem value="temporary">Temporary</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium mb-1 block">Salary (optional)</label>
-                          <Input
-                            name="salary"
-                            value={jobData.salary}
-                            onChange={handleJobChange}
-                            placeholder="e.g., $75,000/year"
-                            className="bg-card border-input"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-sm font-medium mb-1 block">Key Responsibilities (optional)</label>
-                        <Textarea
-                          name="responsibilities"
-                          value={jobData.responsibilities}
-                          onChange={handleJobChange}
-                          placeholder="Describe your main job responsibilities"
-                          rows={3}
-                          className="bg-card border-input"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-sm font-medium mb-1 block">Achievements (optional)</label>
-                        <Textarea
-                          name="achievements"
-                          value={jobData.achievements}
-                          onChange={handleJobChange}
-                          placeholder="List your key achievements and accomplishments"
-                          rows={3}
-                          className="bg-card border-input"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-sm font-medium mb-1 block">Additional Details (optional)</label>
-                        <Textarea
-                          name="additionalDetails"
-                          value={jobData.additionalDetails}
-                          onChange={handleJobChange}
-                          placeholder="Add any additional details about the job"
-                          rows={2}
-                          className="bg-card border-input"
-                        />
-                      </div>
+                      <label className="text-sm font-medium mb-1 block">Full Name *</label>
+                      <Input
+                        name="fullName"
+                        value={formData.fullName}
+                        onChange={handleInputChange}
+                        placeholder="Enter your full name"
+                        required
+                        className="bg-card border-input"
+                      />
                     </div>
-                  )}
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">Certificate Name *</label>
+                      <Input
+                        name="certificateName"
+                        value={formData.certificateName}
+                        onChange={handleInputChange}
+                        placeholder="e.g., Bachelor's Degree"
+                        required
+                        className="bg-card border-input"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">Institution Name *</label>
+                      <Input
+                        name="institution"
+                        value={formData.institution}
+                        onChange={handleInputChange}
+                        placeholder="Enter institution name"
+                        required
+                        className="bg-card border-input"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">Start Date *</label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={`w-full justify-start text-left font-normal bg-card border-input ${
+                              !formData.startDate && "text-muted-foreground"
+                            }`}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {formData.startDate ? format(new Date(formData.startDate), 'PPP') : <span>Pick a date</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={formData.startDate ? new Date(formData.startDate) : undefined}
+                            onSelect={(date) => date && handleDateSelect('startDate', date)}
+                            initialFocus
+                            className="rounded-lg border shadow-lg"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">Issue Date *</label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={`w-full justify-start text-left font-normal bg-card border-input ${
+                              !formData.issueDate && "text-muted-foreground"
+                            }`}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {formData.issueDate ? format(new Date(formData.issueDate), 'PPP') : <span>Pick a date</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={formData.issueDate ? new Date(formData.issueDate) : undefined}
+                            onSelect={(date) => date && handleDateSelect('issueDate', date)}
+                            initialFocus
+                            className="rounded-lg border shadow-lg"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">Grades (optional)</label>
+                      <Input
+                        name="grades"
+                        value={formData.grades}
+                        onChange={handleInputChange}
+                        placeholder="Enter grades if available"
+                        className="bg-card border-input"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">Personality *</label>
+                      <Input
+                        name="personality"
+                        value={formData.personality}
+                        onChange={handleInputChange}
+                        placeholder="Enter personality traits"
+                        required
+                        className="bg-card border-input"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">Additional Details (optional)</label>
+                      <Textarea
+                        name="additionalDetails"
+                        value={formData.additionalDetails}
+                        onChange={handleInputChange}
+                        placeholder="Add any additional details about the certificate"
+                        rows={4}
+                        className="bg-card border-input"
+                      />
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
-              {/* Document Upload and Analysis */}
+              {/* Certificate Upload and Analysis */}
               <Card className="glass-effect">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <UploadIcon className="h-5 w-5" />
-                    Document Upload
+                    Certificate Upload
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -986,9 +517,7 @@ const Upload = () => {
                       accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                     />
                     <UploadIcon className="h-12 w-12 text-muted-foreground mb-4 mx-auto" />
-                    <p className="text-lg font-medium mb-2">
-                      Drag and drop your {documentType} document here
-                    </p>
+                    <p className="text-lg font-medium mb-2">Drag and drop your certificate here</p>
                     <p className="text-sm text-muted-foreground">
                       Supported formats: PDF, DOC, DOCX, JPG, PNG
                     </p>
@@ -1044,8 +573,8 @@ const Upload = () => {
                             : 'text-red-600 dark:text-red-400'
                         }`}>
                           {analysisResult.isAuthentic 
-                            ? `${documentType.charAt(0).toUpperCase() + documentType.slice(1)} Verification Successful` 
-                            : `${documentType.charAt(0).toUpperCase() + documentType.slice(1)} Verification Failed`}
+                            ? 'Certificate Verification Successful' 
+                            : 'Certificate Verification Failed'}
                         </h3>
                         <div className="mt-4 space-y-2">
                           <p className="text-sm">
@@ -1154,7 +683,7 @@ const Upload = () => {
                 <Shield className="h-16 w-16 text-primary mx-auto mb-4" />
                 <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
                 <p className="text-muted-foreground mb-6">
-                  Please sign in to upload and verify your documents
+                  Please sign in to upload and verify your certificates
                 </p>
                 <SignInDropdown variant="default" size="lg" />
               </CardContent>
