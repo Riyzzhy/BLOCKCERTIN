@@ -27,6 +27,21 @@ export interface DocumentMetadata {
   certificationStamp?: string;
   certificationDate?: string;
   certificationSystem?: string;
+  documentType?: 'certificate' | 'internship' | 'job';
+  // Internship specific fields
+  companyName?: string;
+  position?: string;
+  department?: string;
+  endDate?: string;
+  supervisor?: string;
+  skills?: string;
+  description?: string;
+  // Job specific fields
+  jobTitle?: string;
+  employmentType?: string;
+  salary?: string;
+  responsibilities?: string;
+  achievements?: string;
 }
 
 export interface UploadedDocument {

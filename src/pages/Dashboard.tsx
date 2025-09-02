@@ -883,7 +883,7 @@ Original file is attached/referenced above.
                       {getStatusBadge(doc.status)}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Uploaded on {doc.uploadDate} • {doc.metadata?.institution}
+                      Uploaded on {doc.uploadDate} • {doc.metadata?.institution || doc.metadata?.companyName || 'Unknown'}
                     </p>
                     <div className="flex items-center gap-2 mt-2">
                       <p className="text-sm">
@@ -956,11 +956,11 @@ Original file is attached/referenced above.
           {filteredDocuments.length === 0 && (
             <div className="text-center py-12">
               <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">No certificates found</h3>
+              <h3 className="text-lg font-medium text-foreground mb-2">No documents found</h3>
               <p className="text-muted-foreground">
                 {documents.length === 0
-                  ? "You haven't uploaded any certificates yet"
-                  : "No certificates match your search criteria"}
+                  ? "You haven't uploaded any documents yet"
+                  : "No documents match your search criteria"}
               </p>
             </div>
           )}
@@ -973,7 +973,7 @@ Original file is attached/referenced above.
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the certificate
+              This action cannot be undone. This will permanently delete the document
               and remove it from our servers.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -990,7 +990,7 @@ Original file is attached/referenced above.
       <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Certificate QR Code</DialogTitle>
+            <DialogTitle>Document QR Code</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col items-center space-y-4">
             {currentQrCode && (

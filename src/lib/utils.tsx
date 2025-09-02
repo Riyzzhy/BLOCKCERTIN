@@ -16,6 +16,21 @@ export interface DocumentMetadata {
   personality: string;
   additionalDetails?: string;
   verified: boolean;
+  documentType?: 'certificate' | 'internship' | 'job';
+  // Internship specific fields
+  companyName?: string;
+  position?: string;
+  department?: string;
+  endDate?: string;
+  supervisor?: string;
+  skills?: string;
+  description?: string;
+  // Job specific fields
+  jobTitle?: string;
+  employmentType?: string;
+  salary?: string;
+  responsibilities?: string;
+  achievements?: string;
 }
 
 export interface UploadedDocument {
